@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <title>The Art Crime Archive</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
     
@@ -31,6 +31,7 @@
       _gaq.push(['_setAccount', 'UA-36302565-1']);
       _gaq.push(['_setDomainName', 'artcrimearchive.org']);
       _gaq.push(['_trackPageview']);
+      _gaq.push(['_trackPageview', '/the-archive-next']);
       _gaq.push(['_trackPageview', '/create-article']);
       _gaq.push(['_trackPageview', '/my-articles']);
       _gaq.push(['_trackPageview', '/about']);
@@ -46,11 +47,12 @@
   <body data-spy="scroll" data-target=".bs-docs-sidebar" data-twttr-rendered="true">
     <!-- Fluid grid system
     ================================================== -->
-        <div class="banner">
-          <div class="user-access">{{greeting|safe}}</div>
-          <div class="logo"><a href="/the-archive"><img alt="The Art Crime Archive" src="../static/img/AC5_small.png"></a></div>
-        </div>
-    <div class="navbar navbar-mod">
+    <div>
+    <div class="banner">
+      <div class="user-access">{{greeting|safe}}</div>
+      <div class="logo"><a href="/the-archive"><img alt="The Art Crime Archive" src="../static/img/AC5_small.png"></a></div>
+    </div>
+    <div class="navbar navbar-mod navbar-fixed-top">
       <div class="navbar-inner">
         <div class="container">
      
@@ -66,6 +68,7 @@
             <!-- .nav, .navbar-search, .navbar-form, etc -->
             <ul class="nav">
               <li><a href="/the-archive">The Archive</a></li>
+              <li><a href="/featured">Featured Articles</a></li>
 <!--               <li><a href="#">Fellows</a></li>
               <li><a href="#">Events</a></li> -->
               <li><a href="/my-articles">My Articles</a></li>
@@ -81,7 +84,6 @@
       <div class="span9">
       <div id="content" class="center-stage">
         <div id="{{content_id|safe}}">{{content|safe}}</div>
-	  {% include 'article_template.html' %}hey-
       </div>
       </div>
       <div class="span3">

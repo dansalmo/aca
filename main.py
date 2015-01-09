@@ -90,22 +90,34 @@ def format_article(article, all_articles):
     #todo - move to article template file
     all_articles += '<div class="embed">%s</div>' % article.embed
     all_articles += '<div class="title"> <a class="article-link no-ajax" href="/article?id=%s">%s</a> ' % (article.key().id(), article.title)
-    all_articles += '<span class="author"> by %s </span>' % article.author.split('@',2)[0]
+    all_articles += '<span class="author"> by <a class="author-link no-ajax" href="/by-author?author=%s">%s</a> </span>' % (article.author.split('@',2)[0], article.author.split('@',2)[0])
     all_articles += '<span> %s %s </span></div>' % (view_status, edit_link)
     all_articles += '<div class="below-video article"><pre>%s</pre></div>' % article.content
     all_articles += '<div class="below-video tags">Tags: %s</div>' % article.tags
     all_articles += format_comments(article.comments, article.key().id())
     return all_articles
 	
-def get_articles(id=None, author=None, limit=None, bookmark=None):
+def get_articles(ids=None, author=None, limit=None, bookmark=None, user=None):
   """Retrieves articles from Archive entity and composes HTML."""
   if not limit:
     limit = 10
 
   articles = Articles().all().order("-date")
+  if not user:
+    articles = articles.filter('view =', 'Publish')
+  
+  if ids:
+    limit = len(ids)
+    articles = Articles().get_by_id(ids, parent=archive_key())
+    all_articles =''
+    for article in articles:
+      all_articles = format_article(article, all_articles)
+    return all_articles
 
   if author:
-    articles = articles.filter('author =', author)
+    #articles = Articles().all().order("-date").filter('author =', author)
+    articles = Articles().all().order("author").filter('author >=', author).filter('author <', author + u'\ufffd')
+    articles = articles.order('-date')
 
   next = None
   if bookmark:
@@ -131,6 +143,18 @@ class TestPage(webapp2.RequestHandler):
   pass
 # test page stub
 
+class GetPage(webapp2.RequestHandler):
+    def get(self):
+
+        page = self.request.path[1:]
+        template_values = {
+                'content': innerHTML(page + '.html', 'body'),
+                'content_id': page,
+                }
+
+        path = os.path.join(os.path.dirname(__file__), 'index-template.html' )
+        self.response.out.write(template.render(path, template_values))
+
 class MainPage(webapp2.RequestHandler):
   def get(self):
     style = ''
@@ -149,10 +173,14 @@ class MainPage(webapp2.RequestHandler):
       content_id += '-next'
      
     if self.request.path == '/':
-      return self.redirect('/the-archive')
+      return self.redirect('/featured')
       
     if self.request.path == '/article':
       content = format_article(Articles().get_by_id(int(self.request.get('id')), parent=archive_key()), '')
+
+    if self.request.path == '/by-author':
+      content = '<div class="below-video"><span class="author"> All articles by <a class="author-link no-ajax" href="/by-author?author=%s">%s</a> </span></div>' % (self.request.get('author'), self.request.get('author'))
+      content += get_articles(author = self.request.get('author'))
 	
     if self.request.path[:12] == '/curated':
       for id in open('archive-list.txt', 'r').read().split():
@@ -162,13 +190,20 @@ class MainPage(webapp2.RequestHandler):
       content = get_articles(limit = self.request.get('limit'),
                              bookmark = self.request.get('bookmark'))
                              
+    if self.request.path[:12] == '/featured':
+      content = get_articles(ids = 
+      [11006, 97006, 98006, 91006, 91004, 95001, 46003, 87006, 85006, 59001,
+       49001, 9001, 10001, 23008, 31006, 4001, 13001, 21012, 35008, 21005,
+       27001, 18002, 5001, 7001, 25001, 12002, 28011, 8002, 22002])
+
     elif self.request.path == '/test':
 	  content = ''
     elif self.request.path[:12] == '/my-articles':
       if user:
         content = get_articles(author = user.nickname(),
                                limit = self.request.get('limit'),
-                               bookmark = self.request.get('bookmark'))
+                               bookmark = self.request.get('bookmark'),
+                               user = user)
       else:
         if 'X-Requested-With' in self.request.headers:
           return self.error(500)
@@ -270,6 +305,9 @@ class EditArticleForm(webapp2.RequestHandler):
 app = webapp2.WSGIApplication([('/', MainPage),
                                ('/article', MainPage), 
                                ('/curated', MainPage), 
+                               ('/by-author', MainPage), 
+                               ('/featured', MainPage), 
+                               ('/featured-next', MainPage), 
                                ('/the-archive', MainPage), 
                                ('/the-archive-next', MainPage), 
                                ('/recent', MainPage), 
